@@ -60,7 +60,8 @@ RUN cd gcc-7.3.0 && \
 	./configure --with-system-zlib --disable-multilib --enable-languages=c,c++ && \
 	make -j 8 && \
 	make install
-	
+RUN rm -rf /tmp/gcc-7.3.0	
+
 # install RTL-SDR driver 
 WORKDIR /tmp
 RUN echo 'blacklist dvb_usb_rtl28xxu' > /etc/modprobe.d/raspi-blacklist.conf && \
@@ -89,6 +90,7 @@ RUN cd glibc-2.19 && \
 	../configure --prefix='/usr' && \
 	make && \
 	make install
+RUN rm -rf /tmp/glibc-2.19
 
 ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/:${PKG_CONFIG_PATH}"
 
@@ -131,6 +133,7 @@ RUN yum localinstall -y --enablerepo=psychotic --exclude=tcl-8.5* \
 RUN rpmbuild --define "debug_package %{nil}" --rebuild /srpms/tcllauncher-1.6-3.fc25.src.rpm
 RUN yum localinstall -y --enablerepo=psychotic --exclude=tcl-8.5* \
 	/root/rpmbuild/RPMS/x86_64/tcllauncher*
+RUN rm -rf /srpms
 
 # Installing PiAware
 RUN mkdir -p /tmp/piaware_install/venv
