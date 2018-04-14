@@ -183,7 +183,7 @@ COPY fr24feed.ini /etc/
 RUN yum install -y \
 	supervisor
 COPY supervisord.conf /etc/supervisor.d/supervisord.conf
-RUN systemctl enable supervisor
+RUN /usr/bin/systemctl enable supervisord
 
 # Add Tini
 ENV TINI_VERSION v0.16.1
