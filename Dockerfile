@@ -59,8 +59,8 @@ RUN yum install -y \
 RUN cd gcc-7.3.0 && \
 	./configure --with-system-zlib --disable-multilib --enable-languages=c,c++ && \
 	make -j 8 && \
-	make install
-RUN rm -rf /tmp/gcc-7.3.0	
+	make install && \
+	rm -rf /tmp/gcc-7.3.0	
 
 # install RTL-SDR driver 
 WORKDIR /tmp
@@ -89,8 +89,8 @@ RUN cd glibc-2.19 && \
 	cd glibc-build && \
 	../configure --prefix='/usr' && \
 	make && \
-	make install
-RUN rm -rf /tmp/glibc-2.19
+	make install && \
+	rm -rf /tmp/glibc-2.19
 
 ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/:${PKG_CONFIG_PATH}"
 
