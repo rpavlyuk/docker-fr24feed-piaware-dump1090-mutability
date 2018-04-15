@@ -138,6 +138,16 @@ RUN yum localinstall -y --enablerepo=psychotic --exclude=tcl-8.5* \
 RUN rpmbuild --define "debug_package %{nil}" --rebuild /srpms/tcllauncher-1.6-3.fc25.src.rpm
 RUN yum localinstall -y --enablerepo=psychotic --exclude=tcl-8.5* \
 	/root/rpmbuild/RPMS/x86_64/tcllauncher*
+
+# Build and install dependencies
+RUN yum install -y openssl-devel && \
+	rpmbuild --define "debug_package %{nil}" --rebuild /srpms/tcltls-1.6.7-1.fc22.src.rpm && \
+	yum localinstall -y --enablerepo=psychotic --exclude=tcl-8.5* /root/rpmbuild/RPMS/x86_64/tcltls*
+RUN rpmbuild --define "debug_package %{nil}" --rebuild /srpms/itcl-4.0.3-2.fc22.src.rpm && \
+	yum localinstall -y --enablerepo=psychotic --exclude=tcl-8.5* /root/rpmbuild/RPMS/x86_64/itcl*
+RUN rpmbuild --define "debug_package %{nil}" --rebuild /srpms/tcllib-1.17-1.fc22.src.rpm && \
+        yum localinstall -y --enablerepo=psychotic --exclude=tcl-8.5* /root/rpmbuild/RPMS/noarch/tcllib*
+
 RUN rm -rf /srpms
 
 # Installing PiAware
@@ -145,6 +155,18 @@ RUN mkdir -p /tmp/piaware_install/venv
 WORKDIR /tmp/piaware_install
 
 
+### Dump1090 for PiAware
+RUN git clone https://github.com/flightaware/dump1090.git dump1090 && \
+        cd dump1090 && \
+        git checkout -q --detach v3.5.3 -- && \
+        git --no-pager log -1 --oneline
+WORKDIR /tmp/piaware_install
+RUN make -C dump1090 RTLSDR=no BLADERF=no DUMP1090_VERSION="piaware-3.5.3" faup1090 && \
+	/usr/bin/install -d /usr/lib/piaware/helpers && \
+	/usr/bin/install -t /usr/lib/piaware/helpers dump1090/faup1090
+
+# Python for MLAT
+WORKDIR /tmp/piaware_install
 RUN yum install -y \
 	python34 \
 	python34-setuptools \
