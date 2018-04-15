@@ -62,20 +62,6 @@ RUN cd gcc-7.3.0 && \
 	make install && \
 	rm -rf /tmp/gcc-7.3.0	
 
-# install RTL-SDR driver 
-WORKDIR /tmp
-RUN echo 'blacklist dvb_usb_rtl28xxu' > /etc/modprobe.d/raspi-blacklist.conf && \
-    git clone git://git.osmocom.org/rtl-sdr.git && \
-    cd rtl-sdr/ && \
-    autoreconf -i && \
-    ./configure --enable-driver-detach && \
-    make && \
-    make install && \
-    make install-udev-rules && \
-    ldconfig && \
-    rm -rf /tmp/rtl-sdr
-
-
 # Update GLIBC
 RUN yum groupinstall -y "Development tools"
 RUN yum install -y \
@@ -94,11 +80,30 @@ RUN cd glibc-2.19 && \
 
 ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/:${PKG_CONFIG_PATH}"
 
-RUN cat /usr/local/lib/pkgconfig/librtlsdr.pc
-RUN pkg-config --libs librtlsdr libusb-1.0
+COPY local-lib64.conf /etc/ld.so.conf.d/local-lib64.conf
+COPY local-lib.conf /etc/ld.so.conf.d/local-lib.conf
+RUN ldconfig 
 
 RUN gcc --version
 RUN ldd --version
+
+
+# install RTL-SDR driver
+WORKDIR /tmp
+RUN echo 'blacklist dvb_usb_rtl28xxu' > /etc/modprobe.d/raspi-blacklist.conf && \
+    git clone git://git.osmocom.org/rtl-sdr.git && \
+    cd rtl-sdr/ && \
+    autoreconf -i && \
+    ./configure --enable-driver-detach && \
+    make && \
+    make install && \
+    make install-udev-rules && \
+    ldconfig && \
+    rm -rf /tmp/rtl-sdr
+
+# Some info for debug
+RUN cat /usr/local/lib/pkgconfig/librtlsdr.pc
+RUN pkg-config --libs librtlsdr libusb-1.0
 
 # DUMP1090
 WORKDIR /tmp
@@ -182,14 +187,8 @@ COPY fr24feed.ini /etc/
 # Supervisor
 RUN yum install -y \
 	supervisor
-COPY supervisord.conf /etc/supervisor.d/supervisord.conf
+COPY supervisord.conf /etc/supervisord.d/ads-b.ini
 RUN /usr/bin/systemctl enable supervisord
-
-# Add Tini
-ENV TINI_VERSION v0.16.1
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
-ENTRYPOINT ["/tini", "--"]
 
 EXPOSE 8754 8080 30001 30002 30003 30004 30005 30104 
 
