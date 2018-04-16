@@ -198,7 +198,11 @@ RUN git clone https://github.com/flightaware/piaware.git piaware && \
 WORKDIR /tmp/piaware_install
 RUN yum install -y \
 	openssl-perl
-RUN make -C piaware DESTDIR=/ install INSTALL_SUDOERS=1 SYSTEMD= SYSVINIT= TCLLAUNCHER=/usr/bin/tcllauncher
+RUN make -C piaware DESTDIR=/ install INSTALL_SUDOERS=1 SYSTEMD= SYSVINIT= TCLLAUNCHER=/usr/bin/tcllauncher && \
+	ln -s /usr/lib/piaware /usr/share/tcl8.6/piaware && \
+	ln -s /usr/lib/piaware-config /usr/share/tcl8.6/piaware-config && \
+	ln -s /usr/lib/piaware-status /usr/share/tcl8.6/piaware-status && \
+	ln -s /usr/lib/piaware_packages /usr/share/tcl8.6/
 
 # FR24FEED
 WORKDIR /fr24feed
