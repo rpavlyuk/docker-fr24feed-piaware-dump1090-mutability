@@ -1,0 +1,45 @@
+command:
+  container:
+    post: ''
+    pre: ''
+  host:
+    post: ''
+    pre: ''
+container: docker.io/rpavlyuk/c7-fr24
+created: 2018-03-17 22:36:33.855146
+environment: {}
+name: flightradar24
+network_mode: bridge
+mac_address: 02:42:00:e1:04:e9
+ports:
+        8080/tcp:       8888
+        8754/tcp:       8754
+        30001/tcp:      30001
+        30002/tcp:      30002
+        30003/tcp:      30003
+        30004/tcp:      30004
+        30005/tcp:      30005
+        30104/tcp:      30104
+privileged: true
+tty: false
+volumes:
+        /sys/fs/cgroup:
+                bind:   /sys/fs/cgroup
+                mode:   ro
+        /var/log/supervisor:
+                bind:   /var/log/supervisor
+                mode:   rw
+        /etc/ads-b/upintheair.json:
+                bind:   /usr/lib/fr24/public_html/upintheair.json
+                mode:   rw
+        /etc/ads-b/piaware.conf:
+                bind:   /etc/piaware.conf
+                mode:   rw
+        /etc/ads-b/config.js:
+                bind:   /usr/lib/fr24/public_html/config.js
+                mode:   rw
+        /etc/ads-b/fr24feed.ini:
+                bind:   /etc/fr24feed.ini
+                mode:   rw
+working_dir: /root
+devices: [ '/dev/bus/usb:/dev/bus/usb' ]
