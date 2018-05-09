@@ -8,7 +8,7 @@ command:
 container: docker.io/rpavlyuk/c7-fr24
 created: 2018-03-17 22:36:33.855146
 environment: {}
-name: flightradar24
+name: c7-flightradar24
 network_mode: bridge
 mac_address: 02:42:00:e1:ff:ff
 ports:
