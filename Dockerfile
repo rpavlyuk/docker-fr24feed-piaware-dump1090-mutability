@@ -71,10 +71,10 @@ WORKDIR /tmp/piaware_install
 ### Dump1090 for PiAware
 RUN git clone https://github.com/flightaware/dump1090.git dump1090 && \
         cd dump1090 && \
-        git checkout -q --detach v3.5.3 -- && \
+        git checkout -q --detach v3.6.1 -- && \
         git --no-pager log -1 --oneline
 WORKDIR /tmp/piaware_install
-RUN make -C dump1090 RTLSDR=no BLADERF=no DUMP1090_VERSION="piaware-3.5.3" faup1090 && \
+RUN make -C dump1090 RTLSDR=no BLADERF=no DUMP1090_VERSION="piaware-3.6.1" faup1090 && \
 	/usr/bin/install -d /usr/lib/piaware/helpers && \
 	/usr/bin/install -t /usr/lib/piaware/helpers dump1090/faup1090
 
@@ -106,7 +106,7 @@ RUN chmod +x /usr/lib/piaware/helpers/fa-mlat-client
 WORKDIR /tmp/piaware_install
 RUN git clone https://github.com/flightaware/piaware.git piaware && \
         cd piaware && \
-        git checkout -q --detach v3.5.3 -- && \
+        git checkout -q --detach v3.6.1 -- && \
         git --no-pager log -1 --oneline
 WORKDIR /tmp/piaware_install
 RUN yum install -y \
