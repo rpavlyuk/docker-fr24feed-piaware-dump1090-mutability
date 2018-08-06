@@ -48,7 +48,7 @@ RUN yum localinstall -y --enablerepo=psychotic --exclude=tcl-8.5* \
 RUN rpmbuild --define "debug_package %{nil}" --rebuild /srpms/tclx-8.4.0-24.fc21.src.rpm
 RUN yum localinstall -y --enablerepo=psychotic --exclude=tcl-8.5* \
         /root/rpmbuild/RPMS/x86_64/tclx-*
-RUN rpmbuild --define "debug_package %{nil}" --rebuild /srpms/tcllauncher-1.6-3.fc25.src.rpm
+RUN rpmbuild --define "debug_package %{nil}" --rebuild /srpms/tcllauncher-1.8-1.el7.src.rpm
 RUN yum localinstall -y --enablerepo=psychotic --exclude=tcl-8.5* \
 	/root/rpmbuild/RPMS/x86_64/tcllauncher*
 
@@ -71,10 +71,10 @@ WORKDIR /tmp/piaware_install
 ### Dump1090 for PiAware
 RUN git clone https://github.com/flightaware/dump1090.git dump1090 && \
         cd dump1090 && \
-        git checkout -q --detach v3.6.1 -- && \
+        git checkout -q --detach v3.6.2 -- && \
         git --no-pager log -1 --oneline
 WORKDIR /tmp/piaware_install
-RUN make -C dump1090 RTLSDR=no BLADERF=no DUMP1090_VERSION="piaware-3.6.1" faup1090 && \
+RUN make -C dump1090 RTLSDR=no BLADERF=no DUMP1090_VERSION="piaware-3.6.2" faup1090 && \
 	/usr/bin/install -d /usr/lib/piaware/helpers && \
 	/usr/bin/install -t /usr/lib/piaware/helpers dump1090/faup1090
 
@@ -102,11 +102,12 @@ RUN cd cx_Freeze-4.3.4 && \
 ### Installs
 RUN /tmp/piaware_install/venv/bin/cxfreeze --target-dir=/usr/lib/piaware/helpers --include-modules=imp /tmp/piaware_install/venv/bin/fa-mlat-client
 RUN chmod +x /usr/lib/piaware/helpers/fa-mlat-client
+
 ### PiAware
 WORKDIR /tmp/piaware_install
 RUN git clone https://github.com/flightaware/piaware.git piaware && \
         cd piaware && \
-        git checkout -q --detach v3.6.1 -- && \
+        git checkout -q --detach v3.6.2 -- && \
         git --no-pager log -1 --oneline
 WORKDIR /tmp/piaware_install
 RUN yum install -y \
@@ -115,7 +116,8 @@ RUN make -C piaware DESTDIR=/ install INSTALL_SUDOERS=1 SYSTEMD= SYSVINIT= TCLLA
 	ln -s /usr/lib/piaware /usr/share/tcl8.6/piaware && \
 	ln -s /usr/lib/piaware-config /usr/share/tcl8.6/piaware-config && \
 	ln -s /usr/lib/piaware-status /usr/share/tcl8.6/piaware-status && \
-	ln -s /usr/lib/piaware_packages /usr/share/tcl8.6/
+	ln -s /usr/lib/piaware_packages /usr/share/tcl8.6/ && \
+	ln -s /usr/lib/fa_adept_codec /usr/share/tcl8.6/ && echo "TCL Libs Installed"
 
 # FR24FEED
 WORKDIR /fr24feed
