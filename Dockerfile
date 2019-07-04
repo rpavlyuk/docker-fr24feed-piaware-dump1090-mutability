@@ -1,36 +1,7 @@
 FROM docker.io/rpavlyuk/c7-gcc7.3-glib2.19
 MAINTAINER "Roman Pavlyuk" <roman.pavlyuk@gmail.com>
 
-# install RTL-SDR driver
-WORKDIR /tmp
-RUN echo 'blacklist dvb_usb_rtl28xxu' > /etc/modprobe.d/raspi-blacklist.conf && \
-    git clone git://git.osmocom.org/rtl-sdr.git && \
-    cd rtl-sdr/ && \
-    autoreconf -i && \
-    ./configure --enable-driver-detach && \
-    make && \
-    make install && \
-    make install-udev-rules && \
-    ldconfig && \
-    rm -rf /tmp/rtl-sdr
-
-# Some info for debug
-RUN cat /usr/local/lib/pkgconfig/librtlsdr.pc
-RUN pkg-config --libs librtlsdr libusb-1.0
-
-# DUMP1090
-WORKDIR /tmp
-RUN git clone https://github.com/mutability/dump1090 && \
-    cd dump1090 && \
-    make && mkdir /usr/lib/fr24 && cp dump1090 /usr/lib/fr24/ && cp -r public_html /usr/lib/fr24/
-COPY config.js /usr/lib/fr24/public_html/
-RUN mkdir /usr/lib/fr24/public_html/data
-
-# Uncomment if you want to add your upintheair.json file
-#COPY upintheair.json /usr/lib/fr24/public_html/
-
-
-# PIAWARE
+# Install libraries for PiAware
 COPY srpms/ /srpms/
 RUN rpm --import http://wiki.psychotic.ninja/RPM-GPG-KEY-psychotic
 RUN rpm -ivh http://packages.psychotic.ninja/6/base/i386/RPMS/psychotic-release-1.0.0-1.el6.psychotic.noarch.rpm
@@ -63,6 +34,52 @@ RUN rpmbuild --define "debug_package %{nil}" --rebuild /srpms/tcllib-1.17-1.fc22
 
 RUN rm -rf /srpms
 
+# install RTL-SDR driver
+RUN yum install -y \
+	libusbx-devel \
+	libusb-devel
+
+WORKDIR /tmp
+RUN echo 'blacklist dvb_usb_rtl28xxu' > /etc/modprobe.d/raspi-blacklist.conf && \
+    git clone git://git.osmocom.org/rtl-sdr.git && \
+    mkdir rtl-sdr/build && \
+    cd rtl-sdr/build && \
+    cmake ../ -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON && \
+    make && \
+    make install && \
+    ldconfig && \
+    rm -rf /tmp/rtl-sdr
+
+# Some info for debug
+RUN cat /usr/local/lib/pkgconfig/librtlsdr.pc
+RUN pkg-config --libs librtlsdr libusb-1.0
+
+# libBladeRF
+WORKDIR /tmp
+RUN git clone --recursive https://github.com/Nuand/bladeRF.git ./bladeRF && \
+	cd bladeRF && \
+	mkdir -p host/build && \
+	cd host/build && \
+	cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DINSTALL_UDEV_RULES=ON ../
+RUN make -C bladeRF/host/build && make -C bladeRF/host/build install && ldconfig
+
+# Pre-requisites
+RUN yum install -y \
+	ncurses-devel
+
+# DUMP1090
+WORKDIR /tmp
+RUN git clone https://github.com/flightaware/dump1090 && \
+    cd dump1090 && \
+    make && mkdir /usr/lib/fr24 && cp dump1090 /usr/lib/fr24/ && cp -r public_html /usr/lib/fr24/
+
+COPY config.js /usr/lib/fr24/public_html/
+RUN mkdir /usr/lib/fr24/public_html/data
+
+# Uncomment if you want to add your upintheair.json file
+#COPY upintheair.json /usr/lib/fr24/public_html/
+
+
 # Installing PiAware
 RUN mkdir -p /tmp/piaware_install/venv
 WORKDIR /tmp/piaware_install
@@ -71,20 +88,20 @@ WORKDIR /tmp/piaware_install
 ### Dump1090 for PiAware
 RUN git clone https://github.com/flightaware/dump1090.git dump1090 && \
         cd dump1090 && \
-        git checkout -q --detach v3.6.2 -- && \
+        git checkout -q --detach v3.7.1 -- && \
         git --no-pager log -1 --oneline
 WORKDIR /tmp/piaware_install
-RUN make -C dump1090 RTLSDR=no BLADERF=no DUMP1090_VERSION="piaware-3.6.2" faup1090 && \
+RUN make -C dump1090 RTLSDR=no BLADERF=no DUMP1090_VERSION="piaware-3.7.1" faup1090 && \
 	/usr/bin/install -d /usr/lib/piaware/helpers && \
 	/usr/bin/install -t /usr/lib/piaware/helpers dump1090/faup1090
 
 # Python for MLAT
 WORKDIR /tmp/piaware_install
 RUN yum install -y \
-	python34 \
-	python34-setuptools \
-	python34-devel \
-	python34-pip
+	python36 \
+	python36-setuptools \
+	python36-devel \
+	python36-pip
 RUN /usr/bin/pyvenv /tmp/piaware_install/venv --without-pip
 ### mlat
 RUN git clone https://github.com/mutability/mlat-client.git mlat-client && \
@@ -96,8 +113,8 @@ RUN cd mlat-client && \
 	/tmp/piaware_install/venv/bin/python setup.py install
 ### cx_Freeze
 WORKDIR /tmp/piaware_install
-RUN wget -nv -O - 'https://pypi.python.org/packages/source/c/cx_Freeze/cx_Freeze-4.3.4.tar.gz#md5=5bd662af9aa36e5432e9144da51c6378' | tar -C /tmp/piaware_install -zxf -
-RUN cd cx_Freeze-4.3.4 && \
+RUN wget -nv -O - 'https://files.pythonhosted.org/packages/5f/16/eab51d6571dfec2554248cb027c51babd04d97f594ab6359e0707361297d/cx_Freeze-5.1.1.tar.gz' | tar -C /tmp/piaware_install -zxf -
+RUN cd cx_Freeze-5.1.1 && \
 	/tmp/piaware_install/venv/bin/python ./setup.py install
 ### Installs
 RUN /tmp/piaware_install/venv/bin/cxfreeze --target-dir=/usr/lib/piaware/helpers --include-modules=imp /tmp/piaware_install/venv/bin/fa-mlat-client
@@ -107,17 +124,30 @@ RUN chmod +x /usr/lib/piaware/helpers/fa-mlat-client
 WORKDIR /tmp/piaware_install
 RUN git clone https://github.com/flightaware/piaware.git piaware && \
         cd piaware && \
-        git checkout -q --detach v3.6.2 -- && \
+        git checkout -q --detach v3.7.1 -- && \
         git --no-pager log -1 --oneline
 WORKDIR /tmp/piaware_install
 RUN yum install -y \
-	openssl-perl
+	openssl-perl \
+	boost-devel
 RUN make -C piaware DESTDIR=/ install INSTALL_SUDOERS=1 SYSTEMD= SYSVINIT= TCLLAUNCHER=/usr/bin/tcllauncher && \
 	ln -s /usr/lib/piaware /usr/share/tcl8.6/piaware && \
 	ln -s /usr/lib/piaware-config /usr/share/tcl8.6/piaware-config && \
 	ln -s /usr/lib/piaware-status /usr/share/tcl8.6/piaware-status && \
 	ln -s /usr/lib/piaware_packages /usr/share/tcl8.6/ && \
 	ln -s /usr/lib/fa_adept_codec /usr/share/tcl8.6/ && echo "TCL Libs Installed"
+
+
+#DUMP987
+# WORKDIR /tmp/piaware_install
+# RUN git clone https://github.com/flightaware/dump978.git dump978 && \
+#	cd dump978 && \
+#	git checkout -q --detach v3.7.1 -- && \
+#        git --no-pager log -1 --oneline
+#	
+# RUN make -C dump978 faup978 VERSION=3.7.1 && \
+#	install -d /usr/lib/piaware/helpers && \
+#	install -t /usr/lib/piaware/helpers dump978/faup978
 
 # FR24FEED
 WORKDIR /fr24feed
