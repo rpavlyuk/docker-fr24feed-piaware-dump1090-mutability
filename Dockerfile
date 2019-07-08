@@ -128,8 +128,8 @@ RUN git clone https://github.com/flightaware/piaware.git piaware && \
         git --no-pager log -1 --oneline
 WORKDIR /tmp/piaware_install
 RUN yum install -y \
-	openssl-perl \
-	boost-devel
+	openssl-perl
+
 RUN make -C piaware DESTDIR=/ install INSTALL_SUDOERS=1 SYSTEMD= SYSVINIT= TCLLAUNCHER=/usr/bin/tcllauncher && \
 	ln -s /usr/lib/piaware /usr/share/tcl8.6/piaware && \
 	ln -s /usr/lib/piaware-config /usr/share/tcl8.6/piaware-config && \
@@ -137,17 +137,25 @@ RUN make -C piaware DESTDIR=/ install INSTALL_SUDOERS=1 SYSTEMD= SYSVINIT= TCLLA
 	ln -s /usr/lib/piaware_packages /usr/share/tcl8.6/ && \
 	ln -s /usr/lib/fa_adept_codec /usr/share/tcl8.6/ && echo "TCL Libs Installed"
 
+# fix TCL file to include ITCL 4
+RUN perl -pi -e "s|Itcl\ 3\.4|Itcl\ 4|gi" /usr/share/tcl8.6/piaware/faup.tcl
 
 #DUMP987
-# WORKDIR /tmp/piaware_install
-# RUN git clone https://github.com/flightaware/dump978.git dump978 && \
-#	cd dump978 && \
-#	git checkout -q --detach v3.7.1 -- && \
-#        git --no-pager log -1 --oneline
-#	
-# RUN make -C dump978 faup978 VERSION=3.7.1 && \
-#	install -d /usr/lib/piaware/helpers && \
-#	install -t /usr/lib/piaware/helpers dump978/faup978
+RUN yum install -y \
+	boost169-devel
+
+ WORKDIR /tmp/piaware_install
+RUN git clone https://github.com/flightaware/dump978.git dump978 && \
+	cd dump978 && \
+	git checkout -q --detach v3.7.1 -- && \
+        git --no-pager log -1 --oneline
+
+# RUN perl -pi -e "s|boost_|libboost_|gi" dump978/Makefile
+RUN perl -pi -e "s|\-Ilibs|-Ilibs\ \-I\/usr\/include\/boost169\ \-Wl\,\-\-verbose\ \-L\/usr\/lib64\/boost169\ \-D_GLIBCXX_USE_CXX11_ABI\=0|gi" dump978/Makefile
+	
+RUN make -C dump978 faup978 VERSION=3.7.1 -I/usr/include/boost169 && \
+	install -d /usr/lib/piaware/helpers && \
+	install -t /usr/lib/piaware/helpers dump978/faup978
 
 # FR24FEED
 WORKDIR /fr24feed
