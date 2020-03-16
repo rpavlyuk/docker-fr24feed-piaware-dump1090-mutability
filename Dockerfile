@@ -4,7 +4,7 @@ MAINTAINER "Roman Pavlyuk" <roman.pavlyuk@gmail.com>
 # Install libraries for PiAware
 COPY srpms/ /srpms/
 RUN rpm --import http://wiki.psychotic.ninja/RPM-GPG-KEY-psychotic
-RUN rpm -ivh http://packages.psychotic.ninja/6/base/i386/RPMS/psychotic-release-1.0.0-1.el6.psychotic.noarch.rpm
+RUN rpm -ivh http://packages.psychotic.ninja/7/base/x86_64/RPMS/psychotic-release-1.0.0-1.el7.psychotic.noarch.rpm
 RUN perl -pi -e "s/enabled\=0/enabled\=1/gi" /etc/yum.repos.d/psychotic.repo
 WORKDIR /tmp
 RUN yum install -y --enablerepo=psychotic --exclude=tcl-8.5* \
@@ -34,14 +34,22 @@ RUN rpmbuild --define "debug_package %{nil}" --rebuild /srpms/tcllib-1.17-1.fc22
 
 RUN rm -rf /srpms
 
+# Envs
+ENV RTL_SDR_VERSION 0.6.0
+ENV FR24FEED_VERSION 1.0.18-5
+
 # install RTL-SDR driver
 RUN yum install -y \
 	libusbx-devel \
 	libusb-devel
 
 WORKDIR /tmp
-RUN echo 'blacklist dvb_usb_rtl28xxu' > /etc/modprobe.d/raspi-blacklist.conf && \
-    git clone git://git.osmocom.org/rtl-sdr.git && \
+RUN mkdir -p /etc/modprobe.d && \
+    echo 'blacklist r820t' >> /etc/modprobe.d/raspi-blacklist.conf && \
+    echo 'blacklist rtl2832' >> /etc/modprobe.d/raspi-blacklist.conf && \
+    echo 'blacklist rtl2830' >> /etc/modprobe.d/raspi-blacklist.conf && \
+    echo 'blacklist dvb_usb_rtl28xxu' >> /etc/modprobe.d/raspi-blacklist.conf && \
+    git clone -b ${RTL_SDR_VERSION} --depth 1 https://github.com/osmocom/rtl-sdr.git && \
     mkdir rtl-sdr/build && \
     cd rtl-sdr/build && \
     cmake ../ -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON && \
@@ -88,10 +96,10 @@ WORKDIR /tmp/piaware_install
 ### Dump1090 for PiAware
 RUN git clone https://github.com/flightaware/dump1090.git dump1090 && \
         cd dump1090 && \
-        git checkout -q --detach v3.7.1 -- && \
+        git checkout -q --detach v3.8.0 -- && \
         git --no-pager log -1 --oneline
 WORKDIR /tmp/piaware_install
-RUN make -C dump1090 RTLSDR=no BLADERF=no DUMP1090_VERSION="piaware-3.7.1" faup1090 && \
+RUN make -C dump1090 RTLSDR=no BLADERF=no DUMP1090_VERSION="piaware-3.8.0" faup1090 && \
 	/usr/bin/install -d /usr/lib/piaware/helpers && \
 	/usr/bin/install -t /usr/lib/piaware/helpers dump1090/faup1090
 
@@ -124,7 +132,7 @@ RUN chmod +x /usr/lib/piaware/helpers/fa-mlat-client
 WORKDIR /tmp/piaware_install
 RUN git clone https://github.com/flightaware/piaware.git piaware && \
         cd piaware && \
-        git checkout -q --detach v3.7.1 -- && \
+        git checkout -q --detach v3.8.0 -- && \
         git --no-pager log -1 --oneline
 WORKDIR /tmp/piaware_install
 RUN yum install -y \
@@ -147,13 +155,13 @@ RUN yum install -y \
  WORKDIR /tmp/piaware_install
 RUN git clone https://github.com/flightaware/dump978.git dump978 && \
 	cd dump978 && \
-	git checkout -q --detach v3.7.1 -- && \
+	git checkout -q --detach v3.8.0 -- && \
         git --no-pager log -1 --oneline
 
 # RUN perl -pi -e "s|boost_|libboost_|gi" dump978/Makefile
 RUN perl -pi -e "s|\-Ilibs|-Ilibs\ \-I\/usr\/include\/boost169\ \-Wl\,\-\-verbose\ \-L\/usr\/lib64\/boost169\ \-D_GLIBCXX_USE_CXX11_ABI\=0|gi" dump978/Makefile
 	
-RUN make -C dump978 faup978 VERSION=3.7.1 -I/usr/include/boost169 && \
+RUN make -C dump978 faup978 VERSION=3.8.0 -I/usr/include/boost169 && \
 	install -d /usr/lib/piaware/helpers && \
 	install -t /usr/lib/piaware/helpers dump978/faup978
 
