@@ -20,6 +20,8 @@ install:
 	$(MKDIR) $(SYSTEMD_DIR)
 	$(CP) $(_PROFILE) $(SYSCONFDIR)/systemdock/containers.d
 	$(LN) $(SYSCONFDIR)/systemdock/containers.d/$(_PROFILE)/$(_MODULE).service $(SYSTEMD_DIR)/$(_MODULE).service
+	$(MKDIR) $(SYSCONFDIR)/modprobe.d
+	$(CP) ./src/rtlXXXX-blacklist.conf $(SYSCONFDIR)/modprobe.d
 
 uninstall:
 	$(RM) $(SYSTEMD_DIR)/$(_MODULE).service

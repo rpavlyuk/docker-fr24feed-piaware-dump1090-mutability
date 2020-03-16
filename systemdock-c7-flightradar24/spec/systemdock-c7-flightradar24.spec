@@ -45,6 +45,8 @@ ln -s %{_sysconfdir}/systemdock/containers.d/%{_profile}/%{_module}.service $RPM
 %config(noreplace) %{_sysconfdir}/systemdock/containers.d/%{_profile}/config.yml
 %{_sysconfdir}/systemdock/containers.d/%{_profile}/%{_module}.service
 
+%config(noreplace) %{_sysconfdir}/modprobe.d/rtlXXXX-blacklist.conf
+
 %{_unitdir}/%{_module}.service
 
 %changelog
