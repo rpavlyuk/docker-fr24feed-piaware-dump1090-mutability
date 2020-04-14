@@ -3,6 +3,8 @@ _MODULE=systemdock-$(_PROFILE)
 PREFIX = $(DESTDIR)/usr
 SYSCONFDIR=$(DESTDIR)/etc
 DATADIR=$(PREFIX)/share
+LOCALSTATEDIR=$(DESTDIR)/var
+LOGDIR=$(LOCALSTATEDIR)/log
 SYSTEMD_DIR=$(PREFIX)/lib/systemd/system
 INSTALL = /bin/install -c
 MKDIR = /bin/install -c -d
@@ -14,6 +16,7 @@ TMPDIR := $(shell mktemp -d)
 CURRENT_DIR := $(shell pwd)
 PKG_MGR := $(shell which yum)
 RPMBUILD := $(shell which rpmbuild)
+TOUCH = touch
 
 install:
 	$(MKDIR) $(SYSCONFDIR)/systemdock/containers.d
@@ -22,6 +25,8 @@ install:
 	$(LN) $(SYSCONFDIR)/systemdock/containers.d/$(_PROFILE)/$(_MODULE).service $(SYSTEMD_DIR)/$(_MODULE).service
 	$(MKDIR) $(SYSCONFDIR)/modprobe.d
 	$(CP) ./src/rtlXXXX-blacklist.conf $(SYSCONFDIR)/modprobe.d
+	$(MKDIR) $(LOGDIR)
+	$(TOUCH) $(LOGDIR)/piaware.log
 
 uninstall:
 	$(RM) $(SYSTEMD_DIR)/$(_MODULE).service

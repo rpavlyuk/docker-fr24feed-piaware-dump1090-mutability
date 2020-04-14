@@ -29,6 +29,9 @@ volumes:
         /var/log/supervisor:
                 bind:   /var/log/supervisor
                 mode:   rw
+        /var/log/piaware.log:
+                bind:   /var/log/piaware.log
+                mode:   rw
         /etc/ads-b/upintheair.json:
                 bind:   /usr/lib/fr24/public_html/upintheair.json
                 mode:   rw
